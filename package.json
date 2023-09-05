@@ -1,0 +1,14 @@
+{
+  "name": "spotify-controller",
+  "version": "1.0.0",
+  "description": "A Spotify remote for your browser so that you don't have to leave your window to control your music playback.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Orion Gael",
+  "license": "ISC",
+  "dependencies": {
+    "chrome-types": "^0.1.227"
+  }
+}

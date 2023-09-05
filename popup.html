@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css"
+      integrity="sha512-NhSC1YmyruXifcj/KFRWoC561YpHpc5Jtzgvbuzx5VozKpWvQ+4nXhPdFgmx8xqexRcpAglTj9sIBWINXa8x5w=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+    <title>Spotify Controller</title>
+  </head>
+  <body>
+    <div class="container">
+      <div class="main-container">
+        <button class="logout">Log out</button>
+        <div class="player">
+          <div
+            class="album-art"
+            style="background: url(<path-to-image>), #000 / cover no-repeat"
+          ></div>
+          <div class="play-area">
+            <div class="auth-button-container">
+              <button class="auth-button primary-button">
+                Log in to Spotify
+              </button>
+            </div>
+            <div class="error-container" style="display: none">
+              <div class="error-box">
+                <h3>Start a song on Spotify and press "Retry"!</h3>
+                <button class="retry-button primary-button">Retry</button>
+              </div>
+            </div>
+            <div class="song-info" style="display: none">
+              <p class="slug-line">NOW PLAYING</p>
+              <h1 class="song-title">Song Title</h1>
+              <h2 class="song-artist">Artist</h2>
+            </div>
+            <div class="controls">
+              <div class="control-buttons">
+                <button class="toggle-shuffle material-icons">shuffle</button>
+                <button class="skip-back material-icons">skip_previous</button>
+                <button class="play-button material-icons" id="play-button">
+                  play_arrow
+                </button>
+                <button class="skip-forward material-icons">skip_next</button>
+                <button class="toggle-repeat material-icons">repeat</button>
+              </div>
+              <div class="volume-container">
+                <button class="material-icons volume-button" id="volume-button">
+                  volume_up
+                </button>
+                <input type="range" min="0" max="100" class="volume-slider" />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="seek-container">
+          <div class="current-time time">00:00</div>
+          <input type="range" min="1" max="100" class="seek-slider" />
+          <div class="total-duration time">00:00</div>
+        </div>
+      </div>
+      <div class="queue-container">
+        <div class="queue-list" style="display: none">
+          <p class="slug-line">UP NEXT</p>
+          <div class="queue-list-items"></div>
+        </div>
+        <div class="queue-control">
+          <span class="material-icons" style="font-size: 20px"
+            >queue_music</span
+          >
+          <p class="queue-control-text">Show queue</p>
+          <span class="material-icons queue-expand-icon" style="font-size: 16px"
+            >expand_more</span
+          >
+        </div>
+      </div>
+    </div>
+  </body>
+
+  <script src="popup.js"></script>
+</html>
