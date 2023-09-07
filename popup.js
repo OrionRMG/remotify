@@ -1,6 +1,7 @@
 const clientId = "5c30cb62f3654b588234f18c7eeca29d";
 
 let redirectUri = chrome.identity.getRedirectURL("spotify");
+console.log(redirectUri);
 
 // API URLs
 const TOKEN = "https://accounts.spotify.com/api/token";
@@ -108,8 +109,6 @@ generateCodeChallenge(codeVerifier).then((codeChallenge) => {
     interactive: true,
     url: `https://accounts.spotify.com/authorize?${args}`,
   };
-
-  console.log(WebAuthFlowDetails);
 });
 
 // Request authorization code
@@ -119,7 +118,6 @@ function getCode(url) {
   const queryString = parsedURL.search;
   const urlParams = new URLSearchParams(queryString);
   code = urlParams.get("code");
-  console.log(code);
   fetchAccessToken(code);
 }
 
@@ -160,7 +158,7 @@ async function callAuthorizationApi(body) {
 function handleAuthorizationResponse(response, jsonResponse) {
   if (response.status == 200) {
     if (jsonResponse.access_token != undefined) {
-      console.log("Written to storage.");
+      console.log("Access token saved.");
       access_token = jsonResponse.access_token;
       localStorage.setItem("access_token", access_token);
     }
@@ -169,8 +167,6 @@ function handleAuthorizationResponse(response, jsonResponse) {
       localStorage.setItem("refresh_token", refresh_token);
     }
     checkIfAuthenticated();
-  } else {
-    console.log(response.text);
   }
 }
 
@@ -183,7 +179,7 @@ async function refreshAccessToken() {
     "&client_id=" +
     clientId;
   callAuthorizationApi(body);
-  console.log("Refreshed");
+  console.log("Refreshed access token.");
 }
 
 // Make an API call
@@ -238,13 +234,11 @@ function togglePlay() {
       playing = true;
       playButton.innerHTML = "pause";
       timers.push(setInterval(updateSlider, 1000));
-      console.log("now playing - play toggle");
     } else if (playing) {
       callApi("PUT", PAUSE, null);
       playing = false;
       playButton.innerHTML = "play_arrow";
       clearTimers();
-      console.log("stopped -  pause");
     }
   } catch (err) {
     console.log(err);
@@ -260,7 +254,6 @@ function seekTo(time) {
     }
 
     currentTime.innerHTML = convertTime(time);
-    console.log("now playing - seek");
   } catch (err) {
     console.log(err);
   }
@@ -321,8 +314,6 @@ function changeRepeatMode(state) {
 
     currentRepeatMode = state;
 
-    console.log(state);
-
     if (state === "off") {
       toggleRepeat.innerHTML = "repeat";
       toggleRepeat.style.color = "#FFF";
@@ -339,7 +330,6 @@ function changeRepeatMode(state) {
 function getQueue() {
   try {
     callApi("GET", QUEUE, null, handleQueue);
-    console.log("Got queue");
   } catch (err) {
     console.log(err);
   }
@@ -362,7 +352,7 @@ function handleQueue(response) {
         artists.push(artist.name);
       });
 
-      const queueItemContent = `<div class="album-thumb" style="background: url('${imgUrl}')"></div>
+      const queueItemContent = `<div class="album-thumb" style="background-image: url('${imgUrl}')"></div>
       <div class="queue-item-info">
         <div class="queue-item-title">${title}</div>
         <div class="queue-item-artist">${artists.join(", ")}</div>
@@ -405,7 +395,6 @@ function checkIfAuthenticated() {
 function clearTimers() {
   timers.forEach((timer) => {
     clearInterval(timer);
-    console.log(timer);
   });
 
   timers = [];
@@ -418,8 +407,6 @@ function updatePopup(response) {
     logoutButton.style.display = "block";
     errorContainer.style.display = "block";
   } else if (typeof response === "object") {
-    console.log(response);
-
     playArea.style.alignItems = "flex-start";
     songInfo.style.display = "block";
     errorContainer.style.display = "none";
@@ -428,12 +415,17 @@ function updatePopup(response) {
     let artists = [];
     const artistList = response.data.item.artists;
     artistList.forEach((artist) => {
-      artists.push(artist.name);
+      artists.push(
+        "<a href=" + artist.uri + " target=_blank>" + artist.name + "</a>"
+      );
     });
 
-    console.log(artists);
-
-    songTitle.innerHTML = response.data.item.name;
+    songTitle.innerHTML =
+      "<a href=" +
+      response.data.item.uri +
+      " target=_blank>" +
+      response.data.item.name +
+      "</a>";
     songArtist.innerHTML = artists.join(", ");
 
     let albumArtUrl = response.data.item.album.images[1].url;
@@ -461,7 +453,6 @@ function updatePopup(response) {
       playing = true;
       playButton.innerHTML = "pause";
       timers.push(setInterval(updateSlider, 1000));
-      console.log("now playing - init");
     }
 
     if (response.data.shuffle_state === false) {
@@ -494,8 +485,6 @@ function updatePopup(response) {
     } else {
       muted = false;
     }
-  } else {
-    console.log("something went wrong");
   }
 }
 
@@ -513,7 +502,6 @@ function updateSlider() {
     seekSlider.setAttribute("value", currentPosition);
   } else {
     clearTimers();
-    console.log("stopped - song end");
     setTimeout(getContext(updatePopup), 1000);
   }
 }
@@ -524,11 +512,9 @@ seekSlider.addEventListener("input", (event) => {
   const time = Number(event.target.value);
 
   event.preventDefault();
-  console.log(event);
 
   clearTimeout(seekBuffer);
   clearTimers();
-  console.log("stopped - seek");
 
   const timeProgress = 100 * (time / seekSlider.getAttribute("max"));
   seekSlider.style.background = `linear-gradient(to right, #49cc56 ${timeProgress}%, #444 ${timeProgress}%)`;
@@ -536,8 +522,6 @@ seekSlider.addEventListener("input", (event) => {
 
   seekBuffer = setTimeout(() => {
     seekTo(time);
-
-    console.log("Seeked");
   }, 500);
 });
 
@@ -586,8 +570,6 @@ volumeButton.addEventListener("click", () => {
 authButton.addEventListener("click", async () => {
   try {
     const resUrl = await chrome.identity.launchWebAuthFlow(WebAuthFlowDetails);
-
-    console.log(resUrl);
 
     const code = getCode(resUrl);
 
