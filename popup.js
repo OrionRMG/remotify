@@ -1,7 +1,6 @@
 const clientId = "5c30cb62f3654b588234f18c7eeca29d";
 
 let redirectUri = chrome.identity.getRedirectURL("spotify");
-console.log(redirectUri);
 
 // API URLs
 const TOKEN = "https://accounts.spotify.com/api/token";
@@ -411,8 +410,6 @@ function updatePopup(response) {
     songInfo.style.display = "block";
     errorContainer.style.display = "none";
     logoutButton.style.display = "initial";
-
-    console.log(response);
 
     let artists = [];
     const artistList = response.data.item.artists;
