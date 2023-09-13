@@ -5,7 +5,7 @@ console.log(redirectUri);
 
 // API URLs
 const TOKEN = "https://accounts.spotify.com/api/token";
-const PLAYER = "https://api.spotify.com/v1/me/player";
+const PLAYER = "https://api.spotify.com/v1/me/player?additional_types=episode";
 const PLAY = "https://api.spotify.com/v1/me/player/play";
 const PAUSE = "https://api.spotify.com/v1/me/player/pause";
 const SEEK = "https://api.spotify.com/v1/me/player/seek";
@@ -412,13 +412,26 @@ function updatePopup(response) {
     errorContainer.style.display = "none";
     logoutButton.style.display = "initial";
 
+    console.log(response);
+
     let artists = [];
     const artistList = response.data.item.artists;
-    artistList.forEach((artist) => {
+    const show = response.data.item.show;
+    if (artistList) {
+      artistList.forEach((artist) => {
+        artists.push(
+          "<a href=" + artist.uri + " target=_blank>" + artist.name + "</a>"
+        );
+      });
+      let albumArtUrl = response.data.item.album.images[1].url;
+      albumArt.style.backgroundImage = `url(${albumArtUrl})`;
+    } else if (show) {
       artists.push(
-        "<a href=" + artist.uri + " target=_blank>" + artist.name + "</a>"
+        "<a href=" + show.uri + " target=_blank>" + show.name + "</a>"
       );
-    });
+      let albumArtUrl = response.data.item.images[1].url;
+      albumArt.style.backgroundImage = `url(${albumArtUrl})`;
+    }
 
     songTitle.innerHTML =
       "<a href=" +
@@ -427,9 +440,6 @@ function updatePopup(response) {
       response.data.item.name +
       "</a>";
     songArtist.innerHTML = artists.join(", ");
-
-    let albumArtUrl = response.data.item.album.images[1].url;
-    albumArt.style.backgroundImage = `url(${albumArtUrl})`;
 
     currentTime.innerHTML = convertTime(response.data.progress_ms);
 

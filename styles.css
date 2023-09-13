@@ -25,7 +25,6 @@ body::-webkit-scrollbar {
   flex-direction: column;
   align-items: flex-start;
   gap: 24px;
-  border-radius: 12px;
   background: #202020;
   box-shadow: 0px 5px 10px -3px rgba(0, 0, 0, 0.6);
 }
@@ -33,15 +32,13 @@ body::-webkit-scrollbar {
 .queue-container {
   z-index: 0;
   margin: -16px 0px 0px 0px;
-
   display: flex;
-  padding: 24px 16px 8px 16px;
+  padding: 16px 16px 0px 16px;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   gap: 4px;
   align-self: stretch;
-  border-radius: 0px 0px 12px 12px;
   background: #0f0f0f;
 }
 
@@ -94,7 +91,6 @@ body::-webkit-scrollbar {
 .album-art {
   width: 180px;
   height: 180px;
-  border-radius: 6px;
   background-size: contain;
   box-shadow: 0px 2px 10px -2px rgba(0, 0, 0, 0.7);
 }
@@ -160,12 +156,8 @@ body::-webkit-scrollbar {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  margin-bottom: 16px;
   gap: 4px;
-}
-
-p {
-  margin: 0px;
-  line-height: normal;
 }
 
 h1 {
