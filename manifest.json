@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Remotify",
+  "name": "Remotify - a Spotify remote for Chrome",
   "description": "A Spotify remote for your browser so that you don't have to leave your window to control your music playback.",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "icons": {
     "16": "icon16.png",
     "32": "icon32.png",

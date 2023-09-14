@@ -342,18 +342,23 @@ function handleQueue(response) {
   queueListItems.innerHTML = "";
 
   if (queue) {
+    console.log(queue);
     queue.forEach((item) => {
       const imgUrl = item.album.images[2].url;
       const title = item.name;
       let artists = [];
       const artistList = item.artists;
       artistList.forEach((artist) => {
-        artists.push(artist.name);
+        artists.push(
+          `<a href="${artist.external_urls.spotify}" target="_blank">${artist.name}</a>`
+        );
       });
 
       const queueItemContent = `<div class="album-thumb" style="background-image: url('${imgUrl}')"></div>
       <div class="queue-item-info">
-        <div class="queue-item-title">${title}</div>
+        <div class="queue-item-title"><a href="${
+          item.external_urls.spotify
+        }" target=_blank>${title}</a></div>
         <div class="queue-item-artist">${artists.join(", ")}</div>
       </div>`;
 
