@@ -1,9 +1,4 @@
-const clientId = "5c30cb62f3654b588234f18c7eeca29d";
-
-let redirectUri = chrome.identity.getRedirectURL("spotify");
-
 // API URLs
-const TOKEN = "https://accounts.spotify.com/api/token";
 const PLAYER = "https://api.spotify.com/v1/me/player?additional_types=episode";
 const PLAY = "https://api.spotify.com/v1/me/player/play";
 const PAUSE = "https://api.spotify.com/v1/me/player/pause";
@@ -54,7 +49,12 @@ let prevVolume;
 let muted;
 let queueShown;
 
-////////////////////////////////////// Authorization //////////////////////////////////////
+async function generateCodeVerifier() {
+  let codeVerifier = generateRandomString(128);
+  await chrome.storage.local.set({ code_verifier: codeVerifier });
+}
+
+generateCodeVerifier();
 
 function generateRandomString(length) {
   let text = "";
@@ -67,123 +67,10 @@ function generateRandomString(length) {
   return text;
 }
 
-async function generateCodeChallenge(codeVerifier) {
-  function base64encode(string) {
-    return btoa(String.fromCharCode.apply(null, new Uint8Array(string)))
-      .replace(/\+/g, "-")
-      .replace(/\//g, "_")
-      .replace(/=+$/, "");
-  }
-
-  const encoder = new TextEncoder();
-  const data = encoder.encode(codeVerifier);
-  const digest = await window.crypto.subtle.digest("SHA-256", data);
-
-  return base64encode(digest);
-}
-
-let codeVerifier = generateRandomString(128);
-
-let WebAuthFlowDetails = {};
-let args;
-
-generateCodeChallenge(codeVerifier).then((codeChallenge) => {
-  let state = generateRandomString(16);
-  let scope =
-    "user-read-playback-state user-modify-playback-state user-read-currently-playing streaming";
-
-  localStorage.setItem("code_verifier", codeVerifier);
-
-  args = new URLSearchParams({
-    response_type: "code",
-    client_id: clientId,
-    scope: scope,
-    redirect_uri: redirectUri,
-    state: state,
-    code_challenge_method: "S256",
-    code_challenge: codeChallenge,
-  });
-
-  WebAuthFlowDetails = {
-    interactive: true,
-    url: `https://accounts.spotify.com/authorize?${args}`,
-  };
-});
-
-// Request authorization code
-function getCode(url) {
-  let code = null;
-  const parsedURL = new URL(url);
-  const queryString = parsedURL.search;
-  const urlParams = new URLSearchParams(queryString);
-  code = urlParams.get("code");
-  fetchAccessToken(code);
-}
-
-function fetchAccessToken(code) {
-  let codeVerifier = localStorage.getItem("code_verifier");
-
-  let body = new URLSearchParams({
-    grant_type: "authorization_code",
-    code: code,
-    redirect_uri: redirectUri,
-    client_id: clientId,
-    code_verifier: codeVerifier,
-  });
-
-  callAuthorizationApi(body);
-}
-
-// Get Access Token using authorization code
-async function callAuthorizationApi(body) {
-  let response = await fetch(TOKEN, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: body,
-  });
-  if (response.ok) {
-    const jsonResponse = await response.json();
-    handleAuthorizationResponse(response, jsonResponse);
-  } else {
-    throw new Error(
-      `Request failed! Status code: ${response.status} ${response.statusText}`
-    );
-  }
-}
-
-// Store access and refresh tokens
-function handleAuthorizationResponse(response, jsonResponse) {
-  if (response.status == 200) {
-    if (jsonResponse.access_token != undefined) {
-      console.log("Access token saved.");
-      access_token = jsonResponse.access_token;
-      localStorage.setItem("access_token", access_token);
-    }
-    if (jsonResponse.refresh_token != undefined) {
-      refresh_token = jsonResponse.refresh_token;
-      localStorage.setItem("refresh_token", refresh_token);
-    }
-    checkIfAuthenticated();
-  }
-}
-
-async function refreshAccessToken() {
-  refresh_token = localStorage.getItem("refresh_token");
-  let body =
-    "grant_type=refresh_token" +
-    "&refresh_token=" +
-    refresh_token +
-    "&client_id=" +
-    clientId;
-  callAuthorizationApi(body);
-  console.log("Refreshed access token.");
-}
-
 // Make an API call
 async function callApi(method, url, body, callback) {
-  let access_token = localStorage.getItem("access_token");
+  const access_token_obj = await chrome.storage.local.get(["access_token"]);
+  const access_token = access_token_obj.access_token;
 
   let response = await fetch(url, {
     method: method,
@@ -207,7 +94,8 @@ async function handleApiResponse(response) {
   } else if (response.status == 204) {
     return response.status;
   } else if (response.status == 401) {
-    refreshAccessToken();
+    // refreshAccessToken();
+    chrome.runtime.sendMessage("REFRESH ACCESS TOKEN");
   } else {
     throw new Error(
       `Request failed! Status code: ${response.status} ${response.statusText}`
@@ -380,8 +268,11 @@ function clearQueue() {
 ///////////////////// UI Functionality /////////////////////
 
 //Check if user is already authenticated and modify DOM accordingly
-function checkIfAuthenticated() {
-  if (localStorage.getItem("access_token")) {
+async function checkIfAuthenticated() {
+  const isAccessTokenObj = await chrome.storage.local.get(["access_token"]);
+  const isAccessToken = isAccessTokenObj.access_token;
+
+  if (!!isAccessToken) {
     authButtonContainer.style.display = "none";
 
     getContext(updatePopup);
@@ -581,11 +472,22 @@ volumeButton.addEventListener("click", () => {
 //Handle initial authorization
 authButton.addEventListener("click", async () => {
   try {
-    const resUrl = await chrome.identity.launchWebAuthFlow(WebAuthFlowDetails);
+    // const resUrl = await chrome.identity.launchWebAuthFlow(WebAuthFlowDetails);
 
-    const code = getCode(resUrl);
+    // const code = getCode(resUrl);
 
-    fetchAccessToken(code);
+    // fetchAccessToken(code);
+
+    const codeVerifierObj = await chrome.storage.local.get(["code_verifier"]);
+    const codeVerifier = codeVerifierObj.code_verifier;
+
+    const encoder = new TextEncoder();
+    const data = encoder.encode(codeVerifier);
+    const digest = await window.crypto.subtle.digest("SHA-256", data);
+
+    await chrome.storage.session.set({ digest });
+
+    chrome.runtime.sendMessage("GET ACCESS TOKEN");
   } catch (err) {
     console.log(err);
   }
@@ -639,10 +541,14 @@ queueControl.addEventListener("click", () => {
   }
 });
 
-logoutButton.addEventListener("click", () => {
-  localStorage.removeItem("access_token");
-  localStorage.removeItem("refresh_token");
+logoutButton.addEventListener("click", async () => {
+  await chrome.storage.local.clear();
+
   checkIfAuthenticated();
 });
 
 checkIfAuthenticated();
+
+chrome.runtime.onMessage.addListener((request) => {
+  if (request === "REFRESH") checkIfAuthenticated();
+});
